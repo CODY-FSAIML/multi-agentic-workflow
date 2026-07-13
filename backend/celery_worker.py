@@ -1,4 +1,6 @@
 import os
+from uuid import UUID
+
 from celery import Celery
 import requests
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -47,8 +49,9 @@ def call_llm_api(system_prompt: str, user_prompt: str) -> str:
 def run_multi_agent_workflow(job_id: str, prompt: str):
     db = SessionLocal()
     try:
+        job_uuid = UUID(job_id)
         # Update main status
-        job = db.query(models.WorkflowJob).filter(models.WorkflowJob.id == job_id).first()
+        job = db.query(models.WorkflowJob).filter(models.WorkflowJob.id == job_uuid).first()
         job.status = "processing"
         db.commit()
 

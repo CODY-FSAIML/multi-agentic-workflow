@@ -2,11 +2,8 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Grab the DB URL from the .env file, or use the Docker default
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/postgres")
-
-# Create the SQLAlchemy engine
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 # Create a session maker for database transactions
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
