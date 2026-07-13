@@ -4,15 +4,15 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: multi_agent_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "admin", "-d", "multi_agent_db"]
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,7 +28,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://admin:password@db:5432/multi_agent_db
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
       - REDIS_URL=redis://redis:6379/0
       - LLM_API_KEY=${LLM_API_KEY}
     depends_on:
@@ -43,7 +43,7 @@ services:
     build: ./backend
     command: celery -A worker.celery worker --loglevel=info
     environment:
-      - DATABASE_URL=postgresql://admin:password@db:5432/multi_agent_db
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
       - REDIS_URL=redis://redis:6379/0
       - LLM_API_KEY=${LLM_API_KEY}
     depends_on:
