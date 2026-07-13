@@ -1,20 +1,4 @@
-
 version: '3.8'
-
-services:
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: dbname
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "user", "-d", "dbname"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-
 
 services:
   db:
@@ -25,18 +9,18 @@ services:
       POSTGRES_DB: multi_agent_db
     ports:
       - "5432:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "admin", "-d", "multi_agent_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
-
-    image: redis:7
-
     image: redis:7-alpine
     ports:
       - "6379:6379"
-
 
   backend:
     build: ./backend
@@ -44,8 +28,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-
-      - DATABASE_URL=postgresql://user:password@db:5432/dbname
+      - DATABASE_URL=postgresql://admin:password@db:5432/multi_agent_db
       - REDIS_URL=redis://redis:6379/0
       - LLM_API_KEY=${LLM_API_KEY}
     depends_on:
@@ -53,22 +36,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-
-      - DATABASE_URL=postgresql://admin:password@db:5432/multi_agent_db
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - db
-      - redis
-
     volumes:
       - ./backend:/app
 
   worker:
     build: ./backend
-
-    command: celery -A celery_worker worker --loglevel=info
+    command: celery -A worker.celery worker --loglevel=info
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/dbname
+      - DATABASE_URL=postgresql://admin:password@db:5432/multi_agent_db
       - REDIS_URL=redis://redis:6379/0
       - LLM_API_KEY=${LLM_API_KEY}
     depends_on:
@@ -76,15 +51,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-
-    command: celery -A worker.celery worker --loglevel=info
-    environment:
-      - DATABASE_URL=postgresql://admin:password@db:5432/multi_agent_db
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - db
-      - redis
-
     volumes:
       - ./backend:/app
 
